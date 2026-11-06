@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>J&T Express — Diárias Online | Enquetes de Disponibilidade</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%23B3261E'/%3E%3Ctext x='50%25' y='56%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-family='Arial,sans-serif' font-weight='900' font-size='26'%3EJ%26T%3C/text%3E%3C/svg%3E" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,1,0" rel="stylesheet" />
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #FFFFFF; color: #1D1B20; }
+    .m3-surface { background-color: #FFF8F7; border: 1px solid #F5DDDA; }
+    .m3-btn-primary { background-color: #B3261E; color: #FFFFFF; transition: all 0.2s cubic-bezier(0.2, 0, 0, 1); }
+    .m3-btn-primary:hover { background-color: #8C1D18; transform: translateY(-1px); box-shadow: 0 10px 24px -6px rgba(179, 38, 30, 0.35); }
+    .m3-chip { background-color: #FCEEEE; color: #B3261E; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-white">
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-red-100">
+    <div class="max-w-5xl mx-auto px-4 py-3.5 flex items-center justify-between gap-3">
+      <a href="/" class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl bg-[#B3261E] flex items-center justify-center text-white font-extrabold text-lg shadow-md shadow-red-900/20">J&T</div>
+        <div>
+          <span class="text-xs font-bold uppercase tracking-widest text-[#B3261E] block">Operação Logística</span>
+          <h1 class="text-lg font-extrabold tracking-tight text-neutral-900">Diárias Online</h1>
+        </div>
+      </a>
+      <div class="flex items-center gap-2.5">
+        <a href="/diarista" class="px-4 py-2.5 rounded-full text-sm font-bold border border-[#B3261E]/25 text-[#B3261E] hover:bg-red-50 transition flex items-center gap-1.5">
+          <span class="material-symbols-rounded text-base">badge</span>
+          <span>Área do Diarista</span>
+        </a>
+        <a href="/acesso" class="m3-btn-primary px-5 py-2.5 rounded-full text-sm font-bold flex items-center gap-1.5">
+          <span class="material-symbols-rounded text-base">admin_panel_settings</span>
+          <span>Painel Administrativo</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-5xl w-full mx-auto px-4 py-8 space-y-8">
+    <section class="m3-surface rounded-[28px] p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div class="space-y-2 max-w-xl">
+        <span class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold m3-chip">
+          <span class="material-symbols-rounded text-sm">bolt</span>
+          Confirmação em Tempo Real
+        </span>
+        <h2 class="text-2xl md:text-3xl font-extrabold text-neutral-900">Enquetes de Disponibilidade</h2>
+        <p class="text-sm text-neutral-600 leading-relaxed">
+          Informe seu CPF abaixo para confirmar sua presença na jornada do dia ou declarar indisponibilidade. Diaristas Preferenciais e Fixos já aparecem pré-confirmados e devem validar sua confirmação.
+        </p>
+      </div>
+      <div class="bg-white p-4 rounded-3xl border border-red-100 shadow-sm w-full md:w-80 space-y-2">
+        <label class="text-xs font-bold uppercase tracking-wider text-neutral-500 block">Seu CPF para Confirmar</label>
+        <input id="cpfInputGlobal" type="text" maxlength="14" placeholder="000.000.000-00" class="w-full px-4 py-3 rounded-2xl border border-neutral-200 focus:border-[#B3261E] focus:outline-none font-bold text-neutral-900 text-base" />
+        <p class="text-[11px] text-neutral-500">Você só pode confirmar em 1 turno por data da jornada.</p>
+      </div>
+    </section>
+
+    <section id="demandasAtivasBox" class="hidden space-y-3">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-rounded text-[#B3261E]">campaign</span>
+        <h3 class="text-lg font-extrabold text-neutral-900">Demandas e Vagas Abertas</h3>
+      </div>
+      <div id="listaDemandasPublicas" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    </section>
+
+    <section class="space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-rounded text-[#B3261E]">how_to_vote</span>
+          <h3 class="text-lg font-extrabold text-neutral-900">Enquetes Ativas</h3>
+        </div>
+        <button onclick="carregarDados()" class="text-xs font-bold text-[#B3261E] hover:underline flex items-center gap-1">
+          <span class="material-symbols-rounded text-sm">refresh</span>
+          Atualizar
+        </button>
+      </div>
+      <div id="enquetesContainer" class="space-y-6">
+        <div class="text-center py-12 text-neutral-400 text-sm font-medium">Carregando enquetes disponíveis...</div>
+      </div>
+    </section>
+  </main>
+
+  <div id="modalFeedback" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-[28px] max-w-md w-full p-6 space-y-4 shadow-2xl border border-red-100">
+      <div class="flex items-center gap-3">
+        <div id="modalIconBox" class="w-12 h-12 rounded-2xl bg-[#FCEEEE] text-[#B3261E] flex items-center justify-center">
+          <span id="modalIcon" class="material-symbols-rounded text-2xl">verified</span>
+        </div>
+        <div>
+          <h4 id="modalTitulo" class="text-lg font-extrabold text-neutral-900">Aviso</h4>
+          <p id="modalMensagem" class="text-sm text-neutral-600"></p>
+        </div>
+      </div>
+      <div class="flex justify-end">
+        <button onclick="fecharModal()" class="m3-btn-primary px-6 py-2.5 rounded-full text-sm font-bold">Entendido</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "https://jtexpress-diariasonline.grupo-bhds.workers.dev";
+
+    const cpfInputGlobal = document.getElementById("cpfInputGlobal");
+    cpfInputGlobal.value = localStorage.getItem("jt_diarista_cpf") || "";
+    cpfInputGlobal.addEventListener("input", function(e) {
+      let v = e.target.value.replace(/\D/g, "").slice(0, 11);
+      v = v.replace(/(\d{3})(\d)/, "$1.$2");
+      v = v.replace(/(\d{3})(\d)/, "$1.$2");
+      v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+      e.target.value = v;
+      localStorage.setItem("jt_diarista_cpf", v);
+    });
+
+    function abrirModal(titulo, mensagem, erro = false) {
+      document.getElementById("modalTitulo").textContent = titulo;
+      document.getElementById("modalMensagem").textContent = mensagem;
+      document.getElementById("modalIcon").textContent = erro ? "error" : "check_circle";
+      const modal = document.getElementById("modalFeedback");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function fecharModal() {
+      const modal = document.getElementById("modalFeedback");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    function formatarDataBR(iso) {
+      if (!iso) return "";
+      const p = iso.split("-");
+      return p.length === 3 ? p[2] + "/" + p[1] + "/" + p[0] : iso;
+    }
+
+    function alternarRecolhimento(idLista) {
+      const el = document.getElementById(idLista);
+      if (el) el.classList.toggle("hidden");
+    }
+
+    async function responderEnquete(enqueteId, opcao, horarioKey = "") {
+      const cpf = cpfInputGlobal.value.trim();
+      if (cpf.replace(/\D/g, "").length !== 11) {
+        abrirModal("CPF Obrigatório", "Digite seu CPF válido no campo superior antes de confirmar sua disponibilidade.", true);
+        cpfInputGlobal.focus();
+        return;
+      }
+      try {
+        const resp = await fetch(API_BASE + "/api/public/enquete/responder", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cpf, enqueteId, opcao, horarioKey })
+        });
+        const json = await resp.json();
+        if (!json.ok) {
+          abrirModal("Não foi possível confirmar", json.error || "Erro ao registrar confirmação.", true);
+          return;
+        }
+        abrirModal("Confirmação Registrada", json.message, false);
+        await carregarDados();
+      } catch (e) {
+        abrirModal("Erro de Conexão", "Não foi possível comunicar com o servidor.", true);
+      }
+    }
+
+    async function carregarDados() {
+      try {
+        const resp = await fetch(API_BASE + "/api/public/bootstrap");
+        const json = await resp.json();
+        if (!json.ok) return;
+
+        const demandasBox = document.getElementById("demandasAtivasBox");
+        const listaDemandas = document.getElementById("listaDemandasPublicas");
+        if (json.demandas && json.demandas.length > 0) {
+          demandasBox.classList.remove("hidden");
+          listaDemandas.innerHTML = json.demandas.map(function(d) {
+            const itensHtml = (d.itens || []).map(function(i) {
+              return `<div class="flex items-center justify-between bg-white px-3.5 py-2 rounded-2xl border border-red-100 text-xs font-bold">
+                <span>${i.horarioInicial} às ${i.horarioFinal}</span>
+                <span class="px-2.5 py-1 rounded-full bg-[#B3261E] text-white">${i.vagas} vaga(s) • VD ${i.vd}</span>
+              </div>`;
+            }).join("");
+            return `<div class="m3-surface p-5 rounded-3xl space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-extrabold uppercase tracking-wider text-[#B3261E]">Data: ${formatarDataBR(d.dataJornada)}</span>
+                <span class="text-[11px] font-semibold text-neutral-500">${d.observacao || "Demanda Oficial"}</span>
+              </div>
+              <div class="space-y-2">${itensHtml}</div>
+            </div>`;
+          }).join("");
+        } else {
+          demandasBox.classList.add("hidden");
+        }
+
+        const container = document.getElementById("enquetesContainer");
+        const enquetesAtivas = (json.enquetes || []).filter(e => e.ativa);
+        if (enquetesAtivas.length === 0) {
+          container.innerHTML = `<div class="m3-surface rounded-[28px] p-10 text-center space-y-2">
+            <span class="material-symbols-rounded text-4xl text-[#B3261E]">event_busy</span>
+            <h4 class="text-base font-extrabold text-neutral-800">Nenhuma enquete aberta no momento</h4>
+            <p class="text-xs text-neutral-500">Assim que o administrador liberar uma nova enquete, ela aparecerá aqui.</p>
+          </div>`;
+          return;
+        }
+
+        container.innerHTML = enquetesAtivas.map(function(enq, idxEnq) {
+          const horariosHtml = (enq.horarios || []).map(function(h, idxH) {
+            const horarioKey = h.horarioInicial + "_" + h.horarioFinal;
+            const collapseId = "collapse_" + idxEnq + "_" + idxH;
+            const participantes = h.participantes || [];
+            const listaParticipantesHtml = participantes.length === 0
+              ? `<p class="text-xs text-neutral-400 py-2">Nenhum diarista confirmado/pré-confirmado neste horário ainda.</p>`
+              : participantes.map(function(p, ordemIdx) {
+                  const badgeStatus = p.status === "CONFIRMADO"
+                    ? `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">Confirmado</span>`
+                    : `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800">Pré-confirmado (Aguardando)</span>`;
+                  const badgeRole = String(p.preferencial).toLowerCase() === "sim"
+                    ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#B3261E] text-white">PREFERENCIAL VIP</span>`
+                    : (String(p.fixo).toLowerCase() === "sim"
+                        ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-neutral-800 text-white">FIXO</span>`
+                        : "");
+                  return `<div class="flex items-center justify-between py-2 px-3 rounded-2xl bg-neutral-50 border border-neutral-200/70 text-xs">
+                    <div class="flex items-center gap-2.5">
+                      <span class="w-7 h-7 rounded-full bg-[#B3261E] text-white font-extrabold flex items-center justify-center text-[11px]">${ordemIdx + 1}º</span>
+                      <span class="font-bold text-neutral-900">${p.nome}</span>
+                      ${badgeRole}
+                    </div>
+                    ${badgeStatus}
+                  </div>`;
+                }).join("");
+
+            return `<div class="bg-white rounded-3xl p-5 border border-red-100 shadow-sm space-y-4">
+              <div class="flex flex-wrap items-center justify-between gap-4">
+                <div class="space-y-1">
+                  <div class="flex items-center gap-2">
+                    <span class="material-symbols-rounded text-[#B3261E]">schedule</span>
+                    <span class="text-lg font-extrabold text-neutral-900">${h.horarioInicial} às ${h.horarioFinal}</span>
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold m3-chip">Intervalo: ${h.intervalo}</span>
+                  </div>
+                  <div class="flex flex-wrap items-center gap-2 text-xs font-bold text-neutral-600 pt-1">
+                    <span class="px-3 py-1 rounded-full bg-neutral-100">VD: ${h.vd}</span>
+                    <span class="px-3 py-1 rounded-full bg-neutral-100">VA: ${h.va}</span>
+                    <span class="px-3 py-1 rounded-full bg-neutral-100">VT: ${h.vt}</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button onclick="responderEnquete('${enq.id}', 'DISPONIVEL', '${horarioKey}')" class="m3-btn-primary px-5 py-2.5 rounded-full text-xs font-extrabold flex items-center gap-1.5">
+                    <span class="material-symbols-rounded text-base">check_circle</span>
+                    Confirmar Disponibilidade
+                  </button>
+                  <button onclick="alternarRecolhimento('${collapseId}')" class="px-4 py-2.5 rounded-full text-xs font-bold border border-neutral-300 text-neutral-700 hover:bg-neutral-100 flex items-center gap-1">
+                    <span class="material-symbols-rounded text-base">expand_more</span>
+                    Lista (${participantes.length})
+                  </button>
+                </div>
+              </div>
+              <div id="${collapseId}" class="hidden pt-3 border-t border-neutral-100 space-y-1.5">
+                <p class="text-[11px] font-bold uppercase tracking-wider text-neutral-400 mb-2">Ordem de Prioridade e Confirmação</p>
+                ${listaParticipantesHtml}
+              </div>
+            </div>`;
+          }).join("");
+
+          const indisponiveisCount = (enq.indisponiveis || []).length;
+
+          return `<div class="m3-surface rounded-[32px] p-6 space-y-5">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-red-200/60 pb-4">
+              <div>
+                <span class="text-xs font-extrabold uppercase tracking-wider text-[#B3261E]">Data da Jornada: ${formatarDataBR(enq.dataJornada)}</span>
+                <h4 class="text-xl font-extrabold text-neutral-900">${enq.titulo}</h4>
+              </div>
+              <button onclick="responderEnquete('${enq.id}', 'INDISPONIVEL')" class="px-4 py-2.5 rounded-full text-xs font-extrabold bg-neutral-900 text-white hover:bg-neutral-700 transition flex items-center gap-1.5">
+                <span class="material-symbols-rounded text-sm">block</span>
+                Estou Indisponível nesta Data (${indisponiveisCount})
+              </button>
+            </div>
+            <div class="space-y-3">${horariosHtml}</div>
+          </div>`;
+        }).join("");
+      } catch (e) {}
+    }
+
+    carregarDados();
+  </script>
+</body>
+</html>

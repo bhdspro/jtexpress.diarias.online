@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Administrar Diaristas | J&T Express</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%23B3261E'/%3E%3Ctext x='50%25' y='56%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-family='Arial,sans-serif' font-weight='900' font-size='26'%3EJ%26T%3C/text%3E%3C/svg%3E" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,1,0" rel="stylesheet" />
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #FFFFFF; color: #1D1B20; }
+    .m3-surface { background-color: #FFF8F7; border: 1px solid #F5DDDA; }
+    .m3-btn-primary { background-color: #B3261E; color: #FFFFFF; }
+  </style>
+</head>
+<body class="min-h-screen bg-white hidden" id="corpoProtegido">
+  <header class="border-b border-red-100 bg-white sticky top-0 z-20">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="/acesso" class="w-10 h-10 rounded-2xl bg-[#FCEEEE] text-[#B3261E] flex items-center justify-center">
+          <span class="material-symbols-rounded">arrow_back</span>
+        </a>
+        <div>
+          <span class="text-[11px] font-bold uppercase tracking-widest text-[#B3261E] block">Módulo Administrativo</span>
+          <h1 class="text-base font-extrabold text-neutral-900">Gestão de Diaristas (Fixo, Preferencial e Bloqueio)</h1>
+        </div>
+      </div>
+      <button onclick="salvarAlteracoesDiaristas()" class="m3-btn-primary px-6 py-2.5 rounded-full text-xs font-extrabold">Salvar Tudo na Planilha</button>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-8 space-y-6">
+    <section class="m3-surface rounded-[28px] p-6 space-y-4">
+      <h2 class="text-base font-extrabold text-neutral-900">Adicionar Novo Registro de Diarista</h2>
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+        <input id="novoCpf" type="text" placeholder="CPF" class="px-3.5 py-2.5 rounded-2xl border border-neutral-300 bg-white text-xs font-bold" />
+        <input id="novoNome" type="text" placeholder="Nome Completo" class="px-3.5 py-2.5 rounded-2xl border border-neutral-300 bg-white text-xs font-bold" />
+        <input id="novoWhats" type="text" placeholder="WhatsApp" class="px-3.5 py-2.5 rounded-2xl border border-neutral-300 bg-white text-xs font-bold" />
+        <select id="novoHorario" class="px-3.5 py-2.5 rounded-2xl border border-neutral-300 bg-white text-xs font-bold"></select>
+        <button onclick="adicionarLinhaDiarista()" class="m3-btn-primary rounded-2xl text-xs font-extrabold py-2.5">Adicionar Linha</button>
+      </div>
+    </section>
+
+    <section class="overflow-x-auto border border-red-100 rounded-3xl">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-[#B3261E] text-white uppercase font-extrabold">
+          <tr>
+            <th class="p-3">CPF</th>
+            <th class="p-3">Nome Completo</th>
+            <th class="p-3">WhatsApp</th>
+            <th class="p-3">Horário</th>
+            <th class="p-3">Jornada</th>
+            <th class="p-3">Fixo</th>
+            <th class="p-3">Preferencial (VIP)</th>
+            <th class="p-3">Bloqueado</th>
+            <th class="p-3">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaDiaristasBody" class="divide-y divide-red-100"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE = "https://jtexpress-diariasonline.grupo-bhds.workers.dev";
+    let diaristas = [];
+    let escalas = [];
+
+    async function validarAcesso() {
+      const token = sessionStorage.getItem("JT_ADMIN_TOKEN");
+      if (!token || sessionStorage.getItem("JT_GATEWAY_PASSED") !== "TRUE") {
+        window.location.replace("/acesso");
+        return;
+      }
+      const resp = await fetch(API_BASE + "/api/admin/state", {
+        headers: { "X-Admin-Token": token, "X-Subpage-Origin": "/acesso/diarista" }
+      });
+      const json = await resp.json();
+      if (!json.ok) {
+        window.location.replace("/acesso");
+        return;
+      }
+      document.getElementById("corpoProtegido").classList.remove("hidden");
+      diaristas = json.data.diaristas || [];
+      escalas = json.data.escalas || [];
+      document.getElementById("novoHorario").innerHTML = escalas.map(
+        e => `<option value="${e.horarioInicial}|${e.horarioFinal}">${e.horarioInicial} às ${e.horarioFinal}</option>`
+      ).join("");
+      renderizarTabela();
+    }
+
+    function renderizarTabela() {
+      const tbody = document.getElementById("tabelaDiaristasBody");
+      tbody.innerHTML = diaristas.map(function(d, i) {
+        return `<tr class="hover:bg-red-50/40">
+          <td class="p-3 font-bold">${d.cpf}</td>
+          <td class="p-3"><input type="text" value="${d.nome}" onchange="diaristas[${i}].nome=this.value" class="px-2 py-1 border rounded-lg w-full font-bold" /></td>
+          <td class="p-3"><input type="text" value="${d.whatsapp}" onchange="diaristas[${i}].whatsapp=this.value" class="px-2 py-1 border rounded-lg w-32 font-bold" /></td>
+          <td class="p-3 font-extrabold text-[#B3261E]">${d.horarioInicial} - ${d.horarioFinal}</td>
+          <td class="p-3 font-bold">${d.jornada || "5x2"}</td>
+          <td class="p-3">
+            <select onchange="diaristas[${i}].fixo=this.value" class="px-2 py-1 rounded-lg border font-bold">
+              <option value="Sim" ${d.fixo === "Sim" ? "selected" : ""}>Sim</option>
+              <option value="Não" ${d.fixo !== "Sim" ? "selected" : ""}>Não</option>
+            </select>
+          </td>
+          <td class="p-3">
+            <select onchange="diaristas[${i}].preferencial=this.value" class="px-2 py-1 rounded-lg border font-bold">
+              <option value="Sim" ${d.preferencial === "Sim" ? "selected" : ""}>Sim</option>
+              <option value="Não" ${d.preferencial !== "Sim" ? "selected" : ""}>Não</option>
+            </select>
+          </td>
+          <td class="p-3">
+            <select onchange="diaristas[${i}].bloqueado=this.value" class="px-2 py-1 rounded-lg border font-bold">
+              <option value="Não" ${d.bloqueado !== "Sim" ? "selected" : ""}>Não</option>
+              <option value="Sim" ${d.bloqueado === "Sim" ? "selected" : ""}>Sim</option>
+            </select>
+          </td>
+          <td class="p-3">
+            <button onclick="removerDiarista(${i})" class="px-3 py-1 rounded-full bg-red-600 text-white font-bold">Excluir</button>
+          </td>
+        </tr>`;
+      }).join("");
+    }
+
+    function adicionarLinhaDiarista() {
+      const cpf = document.getElementById("novoCpf").value.trim();
+      const nome = document.getElementById("novoNome").value.trim();
+      const whatsapp = document.getElementById("novoWhats").value.trim();
+      const hParts = (document.getElementById("novoHorario").value || "|").split("|");
+      if (!cpf || !nome) return;
+      diaristas.push({
+        cpf,
+        nome,
+        whatsapp,
+        horarioInicial: hParts[0],
+        horarioFinal: hParts[1],
+        seg: "Sim", ter: "Sim", qua: "Sim", qui: "Sim", sex: "Sim", sab: "Não", dom: "Não",
+        jornada: "5x2",
+        fixo: "Não",
+        preferencial: "Não",
+        bloqueado: "Não",
+        observacoes: ""
+      });
+      renderizarTabela();
+    }
+
+    function removerDiarista(idx) {
+      diaristas.splice(idx, 1);
+      renderizarTabela();
+    }
+
+    async function salvarAlteracoesDiaristas() {
+      const token = sessionStorage.getItem("JT_ADMIN_TOKEN");
+      await fetch(API_BASE + "/api/admin/diarista/salvar-lista", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Admin-Token": token,
+          "X-Subpage-Origin": "/acesso/diarista"
+        },
+        body: JSON.stringify({ diaristas })
+      });
+      alert("Banco de diaristas atualizado com sucesso!");
+      validarAcesso();
+    }
+
+    validarAcesso();
+  </script>
+</body>
+</html>
